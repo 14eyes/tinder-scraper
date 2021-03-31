@@ -17,6 +17,7 @@ allows you to sort them by last_activity_date, age,
 gender, message count, and their average successRate.
 '''
 
+
 def get_match_info():
     matches = api.get_updates()['matches']
     now = datetime.utcnow()
@@ -162,7 +163,8 @@ def pause():
     #print('Napping for %f seconds...' % nap_length)
     sleep(nap_length)
 
-def isAlreadyInDatabase(id,data):
+
+def isAlreadyInDatabase(id, data):
     '''
     Will check if a person with a provided ID is already present
     in the data file.
@@ -178,38 +180,41 @@ def isAlreadyInDatabase(id,data):
         print(message)
     return False
 
+
 def findPeople(data):
     duplicates = 0
     status = data["status"]
     if status == 200:
         try:
             results = data["results"]
-            #print(results)
+            # print(results)
             pplAmount = len(results)
 
             #print("Getting the existing records")
             try:
-                with open('data', 'r') as f:
+                with open('data.json', 'r') as f:
                     filedata = json.load(f)
             except json.JSONDecodeError:
                 filedata = []
             except FileNotFoundError:
-                with open('data','w'):
+                with open('data.json', 'w'):
                     filedata = []
 
             #print("Cross-referencing the list")
             for person in results:
                 pId = person["_id"]
-                if not isAlreadyInDatabase(pId,filedata):
+                if not isAlreadyInDatabase(pId, filedata):
+                    print("Scraping: " +
+                          person["name"] + ' ' + person["birth_date"])
                     #print("New person found, record below:")
-                    #print(person)
+                    # print(person)
                     filedata.append(person)
-                    #print(filedata)
+                    # print(filedata)
                 else:
                     duplicates += 1
 
             amount = pplAmount - duplicates
-            with open('data', 'w') as f:
+            with open('data.json', 'w') as f:
                 json.dump(filedata, f)
             print("Data scraping cycle complete. Total amount of people: " + str(pplAmount) + ". New records: " + str(
                 amount))
@@ -223,28 +228,31 @@ def findPeople(data):
         print("Something went wrong. Status returned is " + str(status))
         return 999
 
+
 if __name__ == '__main__':
     if api.authverif() == True:
         print("Gathering Data...")
         #match_info = get_match_info()
-        targetAmount = 500
+        targetAmount = 50
         currentAmount = 0
         cycle = 0
         start_time = time.time()
-        while currentAmount<targetAmount:
-            if cycle>0:
+        while currentAmount < targetAmount:
+            if cycle > 0:
                 pause()
-            cycle+=1
-            progress = round((currentAmount/targetAmount)*100,2)
+            cycle += 1
+            progress = round((currentAmount/targetAmount)*100, 2)
             print(str(progress)+"% Running cycle #"+str(cycle)+"...")
             people = api.get_recommendations()
             n = findPeople(people)
-            currentAmount+=n
-            if n==0:
-                choice = input("Didn't receive any new records. Wanna continue?")
-                if not choice=='y':
+            currentAmount += n
+            if n == 0:
+                choice = input(
+                    "Didn't receive any new records. Wanna continue?")
+                if not choice == 'y':
                     print("Aborting.")
                     break
-        print("Job completed in "+str(cycle)+" cycles, "+str(datetime.timedelta(seconds=(time.time() - start_time)))+". Added a total of "+str(currentAmount)+" people to the datafile.")
+        print("Job completed in "+str(cycle)+" cycles, "+str(datetime.timedelta(seconds=(time.time() -
+              start_time)))+". Added a total of "+str(currentAmount)+" people to the datafile.")
     else:
         print("Something went wrong. You were not authorized.")
