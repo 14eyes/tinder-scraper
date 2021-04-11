@@ -17,7 +17,7 @@ def get_auth_token(fb_auth_token, fb_user_id):
         return {"error": "could not retrieve fb_auth_token"}
     if "error" in fb_user_id:
         return {"error": "could not retrieve fb_user_id"}
-    url = "https://api.gotinder.com/v2/auth/login/facebook"
+    url = config.host + '/v2/auth/login/facebook'
     req = requests.post(url,
                         headers=headers,
                         data=json.dumps(
@@ -114,17 +114,35 @@ def get_meta():
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not get your metadata:", e)
 
+
+def get_meta_v2():
+    '''
+    Returns meta data on yourself from V2 API. Including the following keys:
+    ['account', 'client_resources', 'plus_screen', 'boost',
+    'fast_match', 'top_picks', 'paywall', 'merchandising', 'places',
+    'typing_indicator', 'profile', 'recs']
+    '''
+    try:
+        url = config.host + '/v2/meta'
+        r = requests.get(url, headers=headers)
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print("Something went wrong. Could not get your metadata:", e)
+
+
 def update_location(lat, lon):
     '''
     Updates your location to the given float inputs
     Note: Requires a passport / Tinder Plus
     '''
     try:
-        url = config.host + '/passport/user/travel'
-        r = requests.post(url, headers=headers, data=json.dumps({"lat": lat, "lon": lon}))
+        url = config.host + '/user/ping'
+        r = requests.post(url, headers=headers,
+                          data=json.dumps({"lat": lat, "lon": lon}))
         return r.json()
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not update your location:", e)
+
 
 def reset_real_location():
     try:
@@ -140,11 +158,12 @@ def get_recs_v2():
     This works more consistently then the normal get_recommendations becuase it seeems to check new location
     '''
     try:
-        url = config.host + '/v2/recs/core?locale=en-US'
+        url = config.host + '/v2/recs/core?locale=en'
         r = requests.get(url, headers=headers)
         return r.json()
     except Exception as e:
         print('excepted')
+
 
 def set_webprofileusername(username):
     '''
@@ -158,6 +177,7 @@ def set_webprofileusername(username):
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not set webprofile username:", e)
 
+
 def reset_webprofileusername(username):
     '''
     Resets the username for the webprofile
@@ -168,6 +188,7 @@ def reset_webprofileusername(username):
         return r.json()
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not delete webprofile username:", e)
+
 
 def get_person(id):
     '''
@@ -191,6 +212,15 @@ def send_msg(match_id, msg):
         print("Something went wrong. Could not send your message:", e)
 
 
+def unmatch(match_id):
+    try:
+        url = config.host + '/user/matches/%s' % match_id
+        r = requests.delete(url, headers=headers)
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print("Something went wrong. Could not unmatch person:", e)
+
+
 def superlike(person_id):
     try:
         url = config.host + '/like/%s/super' % person_id
@@ -199,6 +229,13 @@ def superlike(person_id):
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not superlike:", e)
 
+def get_share_url(person_id):
+    try:
+        url = config.host + '/user/%s/share' % person_id
+        r = requests.post(url, headers=headers)
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print("Something went wrong. Could not Get share link:", e)
 
 def like(person_id):
     try:
@@ -242,6 +279,7 @@ def match_info(match_id):
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not get your match info:", e)
 
+
 def all_matches():
     try:
         url = config.host + '/v2/matches'
@@ -249,6 +287,36 @@ def all_matches():
         return r.json()
     except requests.exceptions.RequestException as e:
         print("Something went wrong. Could not get your match info:", e)
+
+
+def fast_match_info():
+    try:
+        url = config.host + '/v2/fast-match/preview'
+        r = requests.get(url, headers=headers)
+        count = r.headers['fast-match-count']
+        # image is in the response but its in hex..
+        return count
+    except requests.exceptions.RequestException as e:
+        print("Something went wrong. Could not get your fast-match count:", e)
+
+
+def trending_gifs(limit=3):
+    try:
+        url = config.host + '/giphy/trending?limit=%s' % limit
+        r = requests.get(url, headers=headers)
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print("Something went wrong. Could not get the trending gifs:", e)
+
+
+def gif_query(query, limit=3):
+    try:
+        url = config.host + '/giphy/search?limit=%s&query=%s' % (limit, query)
+        r = requests.get(url, headers=headers)
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print("Something went wrong. Could not get your gifs:", e)
+
 
 # def see_friends():
 #     try:

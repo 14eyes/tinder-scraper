@@ -171,7 +171,7 @@ def isAlreadyInDatabase(id, data):
     '''
     try:
         for person in data:
-            pId = person["_id"]
+            pId = person["user"]["_id"]
             if id == pId:
                 return True
     except Exception as ex:
@@ -183,10 +183,10 @@ def isAlreadyInDatabase(id, data):
 
 def findPeople(data):
     duplicates = 0
-    status = data["status"]
+    status = data["meta"]["status"]
     if status == 200:
         try:
-            results = data["results"]
+            results = data["data"]["results"]
             # print(results)
             pplAmount = len(results)
 
@@ -202,10 +202,10 @@ def findPeople(data):
 
             #print("Cross-referencing the list")
             for person in results:
-                pId = person["_id"]
+                pId = person["user"]["_id"]
                 if not isAlreadyInDatabase(pId, filedata):
                     print("Scraping: " +
-                          person["name"] + ' ' + person["birth_date"])
+                          person["user"]["name"] + ' ' + str(calculate_age(person["user"]["birth_date"])))
                     #print("New person found, record below:")
                     # print(person)
                     filedata.append(person)
@@ -244,6 +244,7 @@ if __name__ == '__main__':
             progress = round((currentAmount/targetAmount)*100, 2)
             print(str(progress)+"% Running cycle #"+str(cycle)+"...")
             people = api.get_recommendations()
+            people = api.get_recs_v2()
             n = findPeople(people)
             currentAmount += n
             if n == 0:
